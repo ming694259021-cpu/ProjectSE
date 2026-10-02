@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="th">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ระบบยืมและจองห้องคอมพิวเตอร์ | Computer Room Booking System</title>
+
+    <!-- Google Fonts: Kanit -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Kanit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- FontAwesome 6 -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.2/css/all.min.css">
+    <!-- SweetAlert2 Dark Theme -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@sweetalert2/theme-dark@4/dark.css">
+
+    <!-- Libraries for Export PDF & Excel -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.31/jspdf.plugin.autotable.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+        :root {
+            --bg-main: #020617;
+            --bg-card: rgba(15, 23, 42, 0.85);
+            --neon-blue: #38bdf8;
+            --neon-cyan: #06b6d4;
+            --neon-indigo: #6366f1;
+            --border-color: rgba(56, 189, 248, 0.25);
+            --text-main: #f8fafc;
+            --text-muted: #cbd5e1;
+        }
+
+        body {
+            font-family: 'Kanit', sans-serif;
+            background: radial-gradient(circle at top right, #0f172a, #020617);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .text-muted {
+            color: var(--text-muted) !important;
+        }
+
+        /* Glassmorphism Card Style */
+        .glass-card {
+            background: var(--bg-card);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--border-color);
+            border-radius: 1.25rem;
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6);
+        }
+
+        /* Navbar */
+        .navbar-custom {
+            background: rgba(2, 6, 23, 0.85) !important;
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .navbar-brand {
+            font-weight: 700;
+            color: var(--neon-blue) !important;
+            text-shadow: 0 0 10px rgba(56, 189, 248, 0.5);
+        }
+
+        /* Glowing Buttons */
+        .btn-neon-blue {
+            background: linear-gradient(135deg, var(--neon-cyan), var(--neon-blue));
+            color: #000;
+            font-weight: 600;
+            border: none;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.4);
+            transition: all 0.3s ease;
+        }
+
+        .btn-neon-blue:hover {
+            background: linear-gradient(135deg, var(--neon-blue), var(--neon-cyan));
+            color: #000;
+            box-shadow: 0 0 25px rgba(56, 189, 248, 0.7);
+            transform: translateY(-2px);
+        }
+
+        .btn-neon-outline {
+            background: transparent;
+            color: var(--neon-blue);
+            border: 1px solid var(--neon-blue);
+            transition: all 0.3s ease;
+        }
+
+        .btn-neon-outline:hover {
+            background: rgba(56, 189, 248, 0.15);
+            color: #fff;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.3);
+        }
+
+        /* Action Cards */
+        .action-card {
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-card:hover {
+            transform: translateY(-8px);
+            border-color: var(--neon-blue);
+            box-shadow: 0 0 30px rgba(56, 189, 248, 0.25);
+        }
+
+        /* Form Inputs */
+        .form-control,
+        .form-select {
+            background-color: rgba(15, 23, 42, 0.8) !important;
+            border: 1px solid var(--border-color) !important;
+            color: #fff !important;
+            border-radius: 0.5rem;
+        }
+
+        .form-control:focus,
+        .form-select:focus {
+            border-color: var(--neon-blue) !important;
+            box-shadow: 0 0 10px rgba(56, 189, 248, 0.4) !important;
+        }
+
+        /* Dark Custom Tables */
+        .table-dark-custom {
+            --bs-table-bg: transparent;
+            --bs-table-color: var(--text-main);
+            border-color: rgba(255, 255, 255, 0.12);
+        }
+
+        .table-dark-custom th {
+            background: rgba(30, 41, 59, 0.9);
+            color: var(--neon-blue);
+            font-weight: 600;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .table-dark-custom td {
+            color: #f8fafc;
+        }
+
+        /* Loading Overlay */
+        #loadingOverlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(2, 6, 23, 0.85);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Sidebar Admin */
+        .admin-sidebar {
+            background: var(--bg-card);
+            border-right: 1px solid var(--border-color);
+            min-height: calc(100vh - 70px);
+        }
+
+        .sidebar-link {
+            color: var(--text-muted);
+            padding: 0.8rem 1.2rem;
+            border-radius: 0.5rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+
+        .sidebar-link:hover,
+        .sidebar-link.active {
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--neon-blue);
+            border-left: 4px solid var(--neon-blue);
+        }
+
+        /* LOGIN PAGE SPECIFIC STYLES */
+        .login-glow-1 {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            background: rgba(6, 182, 212, 0.18);
+            border-radius: 50%;
+            filter: blur(50px);
+            top: -60px;
+            right: -60px;
+            pointer-events: none;
+        }
+
+        .login-glow-2 {
+            position: absolute;
+            width: 220px;
+            height: 220px;
+            background: rgba(59, 130, 246, 0.15);
+            border-radius: 50%;
+            filter: blur(50px);
+            bottom: -60px;
+            left: -60px;
+            pointer-events: none;
+        }
+
+        .login-icon-box {
+            width: 70px;
+            height: 70px;
+            border-radius: 1rem;
+            background: rgba(30, 41, 59, 0.9);
+            border: 1px solid rgba(56, 189, 248, 0.35);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--neon-cyan);
+            box-shadow: 0 0 15px rgba(6, 182, 212, 0.2);
+        }
+
+        .input-login-custom {
+            background-color: rgba(2, 6, 23, 0.85) !important;
+            border: 1px solid rgba(71, 85, 105, 0.7) !important;
+            color: #fff !important;
+            border-radius: 0.6rem;
+            padding: 0.75rem 1rem;
+            font-size: 0.95rem;
+        }
+
+        .input-login-custom:focus {
+            border-color: var(--neon-cyan) !important;
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.25) !important;
+        }
+    </style>
+    <!-- ปุ่มเรียก Modal สมัครสมาชิก -->
+</head>
+
+<body>
+
+    <!-- Loading Overlay -->
+    <div id="loadingOverlay" class="d-none">
+        <div class="spinner-border text-info mb-3" style="width: 3rem; height: 3rem;" role="status"></div>
+        <div class="text-light fw-semibold fs-5">กำลังประมวลผล...</div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark navbar-custom sticky-top">
+        <div class="container-fluid px-4">
+            <a class="navbar-brand d-flex align-items-center gap-2" href="#">
+                <i class="fa-solid fa-desktop fs-4 text-info"></i>
+                <span>COM-ROOM BOOKING</span>
+            </a>
+
+            <div class="d-flex align-items-center gap-3 ms-auto" id="userNavInfo" style="display: none !important;">
+                <div class="text-end d-none d-sm-block">
+                    <div class="fw-semibold text-light" id="navUserFullName">-</div>
+                    <small class="badge bg-secondary" id="navUserRole">-</small>
+                </div>
+                <button class="btn btn-outline-danger btn-sm rounded-circle p-2" onclick="logout()" title="ออกจากระบบ">
+                    <i class="fa-solid fa-right-from-bracket"></i>
+                </button>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Main Container -->
+    <div class="container-fluid flex-grow-1 p-0 d-flex flex-column">
+
+        <!-- LOGIN PAGE -->
+        <div id="pageLogin" class="container d-flex flex-column justify-content-center flex-grow-1 py-5">
+            <div class="row justify-content-center w-100 mx-0">
+                <div class="col-12 col-md-7 col-lg-5 col-xl-4 px-2">
+
+                    <div class="glass-card p-4 p-sm-4 position-relative overflow-hidden">
+                        <div class="login-glow-1"></div>
+                        <div class="login-glow-2"></div>
+
+                        <div class="position-relative z-1 text-center">
+                            <div class="login-icon-box mb-3">
+                                <i class="fa-solid fa-users-gear fa-2x"></i>
+                            </div>
+
+                            <h3 class="fw-bold text-light mb-4" style="letter-spacing: 0.5px;">เข้าสู่ระบบ</h3>
+
+                            <form onsubmit="handleLogin(event)">
+                                <div class="mb-3 text-start">
+                                    <label
+                                        class="form-label text-light fw-medium small d-flex align-items-center gap-2 mb-1">
+                                        <i class="fa-solid fa-user text-info"></i> ชื่อผู้ใช้ (Username)
+                                    </label>
+                                    <input type="text" id="loginUsername" class="form-control input-login-custom"
+                                        placeholder="กรอกชื่อผู้ใช้" required>
+                                </div>
+
+                                <div class="mb-4 text-start">
+                                    <label
+                                        class="form-label text-light fw-medium small d-flex align-items-center gap-2 mb-1">
+                                        <i class="fa-solid fa-key text-info"></i> รหัสผ่าน (Password)
+                                    </label>
+                                    <input type="password" id="loginPassword" class="form-control input-login-custom"
+                                        placeholder="••••••••" required>
+                                </div>
+
+                                <button type="submit"
+                                    class="btn btn-neon-blue w-100 py-2.5 fs-6 rounded-3 fw-bold d-flex align-items-center justify-content-center gap-2 mb-4">
+                                    <i class="fa-solid fa-right-to-bracket"></i> ล็อกอินเข้าสู่ระบบ
+                                </button>
+                            </form>
+
+                            <!-- ส่วนคำอธิบายด้านล่างปุ่มล็อกอิน -->
+                            <div class="pt-2 border-top border-secondary border-opacity-20 text-center">
+                                <p class="text-muted small mb-0">
+                                    <i class="fa-solid fa-circle-info me-1 text-info"></i>
+                                    กรุณากรอกชื่อผู้ใช้และรหัสผ่านที่ได้รับอนุมัติเพื่อเข้าสู่ระบบ
+                                </p>
+                                <small class="text-muted opacity-75 d-block mt-1">
+                                    หากพบปัญหาการเข้าใช้งาน กรุณาติดต่อผู้ดูแลระบบห้องคอมพิวเตอร์
+                                </small>
+                                <!-- ปุ่มเรียก Modal สมัครสมาชิก -->
+                                <button type="button" class="btn btn-outline-info ms-2" onclick="openRegisterModal()">
+                                    <i class="fa-solid fa-user-plus me-1"></i> สมัครสมาชิก
+                                </button>
+                            </div>
+
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+
+        <!-- USER DASHBOARD PAGE -->
+        <div id="pageUserDashboard" class="container py-4 d-none">
+            <div class="glass-card p-4 mb-4 border-start border-4 border-info">
+                <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+                    <div>
+                        <h4 class="fw-bold mb-1">ยินดีต้อนรับ, <span id="userDashboardName" class="text-info"></span> 👋
+                        </h4>
+                        <p class="text-muted small mb-0">เลือกใช้ห้องใช้งานทันที หรือจองห้องล่วงหน้าได้ตามต้องการ</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row g-4 mb-5">
+                <div class="col-md-6">
+                    <div class="glass-card p-4 action-card text-center" onclick="openBorrowModal()">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-primary bg-opacity-20 text-info rounded-circle mb-3"
+                            style="width: 70px; height: 70px;">
+                            <i class="fa-solid fa-bolt fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bold text-light">ใช้ห้องทันที (Borrow Now)</h4>
+                        <p class="text-muted small">บันทึกเวลาเริ่มต้นใช้งานทันที ณ เวลาปัจจุบัน</p>
+                        <button class="btn btn-neon-blue px-4 mt-2">ทำรายการใช้ห้องทันที</button>
+                    </div>
+                </div>
+
+                <div class="col-md-6">
+                    <div class="glass-card p-4 action-card text-center" onclick="openReserveModal()">
+                        <div class="d-inline-flex align-items-center justify-content-center bg-indigo bg-opacity-20 text-indigo rounded-circle mb-3"
+                            style="width: 70px; height: 70px; color: #818cf8;">
+                            <i class="fa-solid fa-calendar-check fa-2x"></i>
+                        </div>
+                        <h4 class="fw-bold text-light">จองห้องล่วงหน้า (Reserve)</h4>
+                        <p class="text-muted small">กำหนดวันและช่วงเวลาที่ต้องการเข้าใช้งานล่วงหน้า</p>
+                        <button class="btn btn-neon-outline px-4 mt-2">เลือกเวลาจองห้อง</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="glass-card p-4">
+                <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                    <h5 class="fw-bold mb-0 text-info"><i
+                            class="fa-solid fa-clock-rotate-left me-2"></i>ประวัติการยืม-จองของคุณ</h5>
+                    <div class="d-flex gap-2">
+                        <button class="btn btn-sm btn-outline-danger" onclick="exportUserPDF()"><i
+                                class="fa-solid fa-file-pdf me-1"></i> PDF</button>
+                        <button class="btn btn-sm btn-outline-success" onclick="exportUserExcel()"><i
+                                class="fa-solid fa-file-excel me-1"></i> Excel</button>
+                    </div>
+                </div>
+
+                <div class="table-responsive">
+                    <table class="table table-dark-custom align-middle" id="userHistoryTable">
+                        <thead>
+                            <tr>
+                                <th>รหัสรายการ</th>
+                                <th>ห้องคอมพิวเตอร์</th>
+                                <th>ประเภท</th>
+                                <th>เวลาเริ่มต้น</th>
+                                <th>เวลาสิ้นสุด</th>
+                                <th>วันที่ทำรายการ</th>
+                                <th class="text-center">จัดการ</th>
+                            </tr>
+                        </thead>
+                        <tbody id="userHistoryTbody"></tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN DASHBOARD PAGE -->
+        <div id="pageAdminDashboard" class="d-none">
+            <div class="row g-0">
+                <div class="col-md-3 col-lg-2 admin-sidebar p-3">
+                    <div class="small text-uppercase fw-bold text-muted mb-3 px-2">เมนูผู้ดูแลระบบ</div>
+                    <div class="nav flex-column gap-2">
+                        <a href="#" class="sidebar-link active" id="menuUsers" onclick="switchAdminTab('users', event)">
+                            <i class="fa-solid fa-users"></i> จัดการผู้ใช้งาน
+                        </a>
+                        <a href="#" class="sidebar-link" id="menuBookings" onclick="switchAdminTab('bookings', event)">
+                            <i class="fa-solid fa-list-check"></i> รายการยืม-จองทั้งหมด
+                        </a>
+                    </div>
+                </div>
+
+                <div class="col-md-9 col-lg-10 p-4">
+                    <div id="adminViewUsers">
+                        <div class="glass-card p-4 mb-4">
+                            <h5 class="fw-bold text-info mb-3"><i
+                                    class="fa-solid fa-users-gear me-2"></i>จัดการรายชื่อผู้ใช้และสถานะ</h5>
+                            <div class="table-responsive">
+                                <table class="table table-dark-custom align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>UserID</th>
+                                            <th>Username</th>
+                                            <th>ชื่อ-นามสกุล</th>
+                                            <th>สิทธิ์ (Role)</th>
+                                            <th>สถานะ (Status)</th>
+                                            <th>จัดการสถานะ</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminUsersTbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="adminViewBookings" class="d-none">
+                        <div class="glass-card p-4 mb-4">
+                            <div class="d-flex justify-content-between align-items-center flex-wrap gap-2 mb-3">
+                                <h5 class="fw-bold text-info mb-0"><i
+                                        class="fa-solid fa-database me-2"></i>ประวัติการยืม-จองทั้งหมดในระบบ</h5>
+                                <div class="d-flex gap-2">
+                                    <button class="btn btn-sm btn-outline-danger" onclick="exportAdminPDF()"><i
+                                            class="fa-solid fa-file-pdf me-1"></i> PDF Report</button>
+                                    <button class="btn btn-sm btn-outline-success" onclick="exportAdminExcel()"><i
+                                            class="fa-solid fa-file-excel me-1"></i> Excel Report</button>
+                                </div>
+                            </div>
+
+                            <div class="table-responsive">
+                                <table class="table table-dark-custom align-middle">
+                                    <thead>
+                                        <tr>
+                                            <th>Booking ID</th>
+                                            <th>ผู้ทำรายการ</th>
+                                            <th>ห้องคอมพิวเตอร์</th>
+                                            <th>ประเภท</th>
+                                            <th>เวลาเริ่มต้น</th>
+                                            <th>เวลาสิ้นสุด</th>
+                                            <th>Timestamp</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="adminBookingsTbody"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- MODAL: BORROW NOW -->
+    <div class="modal fade" id="modalBorrow" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-info">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title fw-bold text-info"><i
+                            class="fa-solid fa-bolt me-2"></i>ใช้ห้องคอมพิวเตอร์ทันที</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form onsubmit="handleBorrowSubmit(event)">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-light">เลือกห้องคอมพิวเตอร์</label>
+                            <select id="borrowRoomSelect" class="form-select" required>
+                                <option value="">-- โปรดเลือกห้อง --</option>
+                                <option value="Lab 101 (Programming)">Lab 101 (Programming)</option>
+                                <option value="Lab 102 (Graphic Design)">Lab 102 (Graphic Design)</option>
+                                <option value="Lab 103 (Network & Server)">Lab 103 (Network & Server)</option>
+                                <option value="Lab 104 (AI & Data Science)">Lab 104 (AI & Data Science)</option>
+                            </select>
+                        </div>
+                        <p class="small text-muted mb-0"><i class="fa-solid fa-info-circle me-1 text-info"></i>
+                            เวลาเริ่มต้นจะถูกบันทึกเป็นเวลาปัจจุบันอัตโนมัติ</p>
+                    </div>
+                    <div class="modal-footer border-top border-secondary">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-neon-blue">ยืนยันการยืม</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: RESERVE ROOM -->
+    <div class="modal fade" id="modalReserve" tabindex="-1">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content glass-card border-info">
+                <div class="modal-header border-bottom border-secondary">
+                    <h5 class="modal-title fw-bold text-info"><i
+                            class="fa-solid fa-calendar-plus me-2"></i>จองห้องคอมพิวเตอร์ล่วงหน้า</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <form onsubmit="handleReserveSubmit(event)">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-light">เลือกห้องคอมพิวเตอร์</label>
+                            <select id="reserveRoomSelect" class="form-select" required>
+                                <option value="">-- โปรดเลือกห้อง --</option>
+                                <option value="Lab 101 (Programming)">Lab 101 (Programming)</option>
+                                <option value="Lab 102 (Graphic Design)">Lab 102 (Graphic Design)</option>
+                                <option value="Lab 103 (Network & Server)">Lab 103 (Network & Server)</option>
+                                <option value="Lab 104 (AI & Data Science)">Lab 104 (AI & Data Science)</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">วัน-เวลา เริ่มต้น</label>
+                            <input type="datetime-local" id="reserveStartDateTime" class="form-control" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">วัน-เวลา สิ้นสุด</label>
+                            <input type="datetime-local" id="reserveEndDateTime" class="form-control" required>
+                        </div>
+                    </div>
+                    <div class="modal-footer border-top border-secondary">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-neon-blue">ยืนยันการจอง</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="py-3 text-center small mt-auto border-top border-secondary border-opacity-20"
+        style="background: rgba(2, 6, 23, 0.95); color: var(--text-muted);">
+        <div class="container">
+            <span>© 2026 Computer Room Booking System. All Rights Reserved.</span>
+        </div>
+    </footer>
+
+    <!-- Bootstrap 5 JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- SweetAlert2 -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+    <script>
+        let modalRegisterObj = null;
+
+        function openRegisterModal() {
+            const form = document.getElementById('registerForm');
+            if (form) form.reset();
+
+            const modalEl = document.getElementById('registerModal');
+            if (modalEl) {
+                modalRegisterObj = bootstrap.Modal.getInstance(modalEl) || new bootstrap.Modal(modalEl);
+                modalRegisterObj.show();
+            }
+        }
+
+        function handleRegisterSubmit(e) {
+            e.preventDefault();
+
+            const fullName = document.getElementById('regFullName').value.trim();
+            const username = document.getElementById('regUsername').value.trim();
+            const password = document.getElementById('regPassword').value;
+            const confirmPassword = document.getElementById('regConfirmPassword').value;
+
+            if (password !== confirmPassword) {
+                Swal.fire('แจ้งเตือน', 'รหัสผ่านและการยืนยันรหัสผ่านไม่ตรงกัน', 'warning');
+                return;
+            }
+
+            if (modalRegisterObj) {
+                modalRegisterObj.hide();
+            }
+
+            showLoading(true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoading(false);
+                    if (res.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'สมัครสมาชิกสำเร็จ',
+                            text: res.message,
+                            confirmButtonColor: '#10b981'
+                        });
+                    } else {
+                        Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+                    }
+                })
+                .withFailureHandler(err => {
+                    showLoading(false);
+                    Swal.fire('เกิดข้อผิดพลาด', err.message || 'ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้', 'error');
+                })
+                .processRegister(username, password, fullName);
+        }
+
+        let currentUser = null;
+        let currentUserBookingsCache = [];
+        let adminUsersCache = [];
+        let adminBookingsCache = [];
+
+        let modalBorrowObj = null;
+        let modalReserveObj = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            modalBorrowObj = new bootstrap.Modal(document.getElementById('modalBorrow'));
+            modalReserveObj = new bootstrap.Modal(document.getElementById('modalReserve'));
+
+            const savedUser = sessionStorage.getItem('booking_user');
+            if (savedUser) {
+                currentUser = JSON.parse(savedUser);
+                initDashboard();
+            } else {
+                showPage('pageLogin');
+            }
+        });
+
+        function showPage(pageId) {
+            ['pageLogin', 'pageUserDashboard', 'pageAdminDashboard'].forEach(id => {
+                document.getElementById(id).classList.add('d-none');
+            });
+            document.getElementById(pageId).classList.remove('d-none');
+
+            const userNavInfo = document.getElementById('userNavInfo');
+            if (pageId === 'pageLogin') {
+                userNavInfo.style.setProperty('display', 'none', 'important');
+            } else {
+                userNavInfo.style.setProperty('display', 'flex', 'important');
+            }
+        }
+
+        function showLoading(show = true) {
+            document.getElementById('loadingOverlay').classList.toggle('d-none', !show);
+        }
+
+        // AUTHENTICATION
+        function handleLogin(e) {
+            e.preventDefault();
+            const u = document.getElementById('loginUsername').value.trim();
+            const p = document.getElementById('loginPassword').value.trim();
+
+            showLoading(true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoading(false);
+                    if (res.success) {
+                        currentUser = res.user;
+                        sessionStorage.setItem('booking_user', JSON.stringify(currentUser));
+
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'เข้าสู่ระบบสำเร็จ',
+                            text: `ยินดีต้อนรับ ${currentUser.FullName}`,
+                            timer: 1500,
+                            showConfirmButton: false
+                        }).then(() => {
+                            initDashboard();
+                        });
+                    } else {
+                        Swal.fire('เข้าสู่ระบบไม่สำเร็จ', res.message, 'error');
+                    }
+                })
+                .withFailureHandler(err => {
+                    showLoading(false);
+                    Swal.fire('ข้อผิดพลาด', err.message, 'error');
+                })
+                .processLogin(u, p);
+        }
+
+        function logout() {
+            sessionStorage.removeItem('booking_user');
+            currentUser = null;
+            document.getElementById('loginUsername').value = '';
+            document.getElementById('loginPassword').value = '';
+            showPage('pageLogin');
+        }
+
+        function initDashboard() {
+            document.getElementById('navUserFullName').textContent = currentUser.FullName;
+            document.getElementById('navUserRole').textContent = currentUser.Role;
+
+            if (currentUser.Role === 'Admin') {
+                showPage('pageAdminDashboard');
+                loadAdminData();
+            } else {
+                showPage('pageUserDashboard');
+                document.getElementById('userDashboardName').textContent = currentUser.FullName;
+                loadUserBookings();
+            }
+        }
+
+        // USER FEATURES
+        function loadUserBookings() {
+            showLoading(true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoading(false);
+                    if (res.success) {
+                        currentUserBookingsCache = res.data;
+                        renderUserBookingsTable(res.data);
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                })
+                .getUserBookings(currentUser.UserID);
+        }
+
+        function renderUserBookingsTable(data) {
+            const tbody = document.getElementById('userHistoryTbody');
+            if (!data || data.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">ยังไม่มีประวัติการยืม-จอง</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = data.map(item => {
+                const isCurrentlyUsing = item.EndDateTime === 'กำลังใช้งาน';
+
+                return `
+          <tr>
+            <td><span class="badge bg-secondary">${item.BookingID}</span></td>
+            <td class="fw-semibold text-info">${item.RoomName}</td>
+            <td><span class="badge ${item.ActionType === 'ใช้ห้องทันที' ? 'bg-primary' : 'bg-indigo'}" style="${item.ActionType !== 'ใช้ห้องทันที' ? 'background:#6366f1' : ''}">${item.ActionType}</span></td>
+            <td>${item.StartDateTime}</td>
+            <td class="fw-semibold text-light">
+              ${isCurrentlyUsing ? '<span class="badge bg-warning text-dark"><i class="fa-solid fa-spinner fa-spin me-1"></i>กำลังใช้งาน</span>' : item.EndDateTime}
+            </td>
+            <td class="text-muted fw-normal">${item.Timestamp}</td>
+            <td class="text-center">
+              ${isCurrentlyUsing ? `
+                <button class="btn btn-sm btn-outline-success" onclick="handleReturnRoom('${item.BookingID}')" title="กดคืนห้อง">
+                  <i class="fa-solid fa-arrow-rotate-left me-1"></i> คืนห้อง
+                </button>
+              ` : `
+                <span class="badge bg-secondary"><i class="fa-solid fa-check me-1"></i>เสร็จสิ้น</span>
+              `}
+            </td>
+          </tr>
+        `;
+            }).join('');
+        }
+
+        function handleReturnRoom(bookingId) {
+            Swal.fire({
+                title: 'ยืนยันการคืนห้อง?',
+                text: `คุณต้องการบันทึกการคืนห้องสำหรับรหัสรายการ ${bookingId} ใช่หรือไม่`,
+                icon: 'question',
+                showCancelButton: true,
+                confirmButtonColor: '#10b981',
+                cancelButtonColor: '#64748b',
+                confirmButtonText: 'ยืนยันคืนห้อง',
+                cancelButtonText: 'ยกเลิก'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    showLoading(true);
+                    google.script.run
+                        .withSuccessHandler(res => {
+                            showLoading(false);
+                            if (res.success) {
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'คืนห้องสำเร็จ',
+                                    text: res.message,
+                                    timer: 1500,
+                                    showConfirmButton: false
+                                });
+                                loadUserBookings();
+                            } else {
+                                Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+                            }
+                        })
+                        .withFailureHandler(err => {
+                            showLoading(false);
+                            Swal.fire('เกิดข้อผิดพลาด', err.message, 'error');
+                        })
+                        .returnRoom(bookingId);
+                }
+            });
+        }
+
+        function openBorrowModal() {
+            document.getElementById('borrowRoomSelect').value = '';
+            modalBorrowObj.show();
+        }
+
+        function openReserveModal() {
+            document.getElementById('reserveRoomSelect').value = '';
+            document.getElementById('reserveStartDateTime').value = '';
+            document.getElementById('reserveEndDateTime').value = '';
+            modalReserveObj.show();
+        }
+
+        function handleBorrowSubmit(e) {
+            e.preventDefault();
+            const room = document.getElementById('borrowRoomSelect').value;
+            modalBorrowObj.hide();
+
+            showLoading(true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoading(false);
+                    if (res.success) {
+                        Swal.fire('สำเร็จ', res.message, 'success');
+                        loadUserBookings();
+                    } else {
+                        Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+                    }
+                })
+                .submitBooking(currentUser.UserID, room, 'ใช้ห้องทันที', '', '');
+        }
+
+        function handleReserveSubmit(e) {
+            e.preventDefault();
+            const room = document.getElementById('reserveRoomSelect').value;
+            const start = document.getElementById('reserveStartDateTime').value;
+            const end = document.getElementById('reserveEndDateTime').value;
+
+            if (!start || !end) {
+                Swal.fire('เตือน', 'กรุณาระบุวัน-เวลาให้ครบถ้วน', 'warning');
+                return;
+            }
+
+            modalReserveObj.hide();
+            showLoading(true);
+
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoading(false);
+                    if (res.success) {
+                        Swal.fire('สำเร็จ', res.message, 'success');
+                        loadUserBookings();
+                    } else {
+                        Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+                    }
+                })
+                .submitBooking(currentUser.UserID, room, 'จองล่วงหน้า', start, end);
+        }
+
+        // ADMIN FEATURES
+        function loadAdminData() {
+            showLoading(true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoading(false);
+                    if (res.success) {
+                        adminUsersCache = res.users;
+                        adminBookingsCache = res.bookings;
+                        renderAdminUsersTable(res.users);
+                        renderAdminBookingsTable(res.bookings);
+                    } else {
+                        Swal.fire('Error', res.message, 'error');
+                    }
+                })
+                .getAdminData();
+        }
+
+        /* ปรับแก้ฟังก์ชัน renderAdminUsersTable เพื่อแสดง Badge สีพื้นหลังทึบ และข้อความ Active / Inactive สีขาว */
+        function renderAdminUsersTable(users) {
+            const tbody = document.getElementById('adminUsersTbody');
+            tbody.innerHTML = users.map(u => {
+                const isActive = (u.Status === 'Active' || u.Status === true || String(u.Status).toLowerCase() === 'active');
+                return `
+        <tr>
+          <td><code>${u.UserID}</code></td>
+          <td class="fw-bold text-light">${u.Username}</td>
+          <td class="text-light">${u.FullName}</td>
+          <td><span class="badge ${u.Role === 'Admin' ? 'bg-danger' : 'bg-info'}">${u.Role}</span></td>
+          <td>
+            <span class="badge ${isActive ? 'bg-success' : 'bg-danger'} text-white px-2 py-1">
+              ${isActive ? 'Active' : 'Inactive'}
+            </span>
+          </td>
+          <td>
+            <button class="btn btn-sm ${isActive ? 'btn-outline-warning' : 'btn-outline-success'}" 
+                    onclick="toggleUser('${u.UserID}', '${u.Status}')">
+              ${isActive ? '<i class="fa-solid fa-user-slash me-1"></i> ปิดใช้งาน' : '<i class="fa-solid fa-user-check me-1"></i> เปิดใช้งาน'}
+            </button>
+          </td>
+        </tr>
+      `;
+            }).join('');
+        }
+
+        function renderAdminBookingsTable(bookings) {
+            const tbody = document.getElementById('adminBookingsTbody');
+            if (!bookings || bookings.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="7" class="text-center text-muted py-4">ไม่มีรายการในระบบ</td></tr>`;
+                return;
+            }
+
+            tbody.innerHTML = bookings.map(b => `
+        <tr>
+          <td><span class="badge bg-secondary">${b.BookingID}</span></td>
+          <td class="fw-semibold text-light">${b.FullName}</td>
+          <td class="text-info">${b.RoomName}</td>
+          <td><span class="badge ${b.ActionType === 'ใช้ห้องทันที' ? 'bg-primary' : 'bg-indigo'}" style="${b.ActionType !== 'ใช้ห้องทันที' ? 'background:#6366f1' : ''}">${b.ActionType}</span></td>
+          <td class="text-light">${b.StartDateTime}</td>
+          <td class="text-light">${b.EndDateTime === 'กำลังใช้งาน' ? '<span class="badge bg-warning text-dark">กำลังใช้งาน</span>' : b.EndDateTime}</td>
+          <td class="text-muted fw-normal">${b.Timestamp}</td>
+        </tr>
+      `).join('');
+        }
+
+        function toggleUser(userId, currentStatus) {
+            showLoading(true);
+            google.script.run
+                .withSuccessHandler(res => {
+                    showLoading(false);
+                    if (res.success) {
+                        Swal.fire('สำเร็จ', res.message, 'success');
+                        loadAdminData();
+                    } else {
+                        Swal.fire('เกิดข้อผิดพลาด', res.message, 'error');
+                    }
+                })
+                .toggleUserStatus(userId, currentStatus);
+        }
+
+        function switchAdminTab(tab, e) {
+            if (e) e.preventDefault();
+            document.getElementById('menuUsers').classList.toggle('active', tab === 'users');
+            document.getElementById('menuBookings').classList.toggle('active', tab === 'bookings');
+
+            document.getElementById('adminViewUsers').classList.toggle('d-none', tab !== 'users');
+            document.getElementById('adminViewBookings').classList.toggle('d-none', tab !== 'bookings');
+        }
+
+        // EXPORT FUNCTIONS
+        function exportUserPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text(`Booking History Report - ${currentUser.FullName}`, 14, 15);
+
+            const tableData = currentUserBookingsCache.map(b => [
+                b.BookingID, b.RoomName, b.ActionType, b.StartDateTime, b.EndDateTime, b.Timestamp
+            ]);
+
+            doc.autoTable({
+                head: [['Booking ID', 'Room', 'Type', 'Start', 'End', 'Timestamp']],
+                body: tableData,
+                startY: 20
+            });
+
+            doc.save(`My_Booking_History_${currentUser.UserID}.pdf`);
+        }
+
+        function exportUserExcel() {
+            const ws = XLSX.utils.json_to_sheet(currentUserBookingsCache);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "MyBookings");
+            XLSX.writeFile(wb, `My_Booking_History_${currentUser.UserID}.xlsx`);
+        }
+
+        function exportAdminPDF() {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            doc.text("All Computer Room Bookings Report", 14, 15);
+
+            const tableData = adminBookingsCache.map(b => [
+                b.BookingID, b.FullName, b.RoomName, b.ActionType, b.StartDateTime, b.EndDateTime
+            ]);
+
+            doc.autoTable({
+                head: [['Booking ID', 'User', 'Room', 'Type', 'Start', 'End']],
+                body: tableData,
+                startY: 20
+            });
+
+            doc.save("All_Bookings_Report.pdf");
+        }
+
+        function exportAdminExcel() {
+            const ws = XLSX.utils.json_to_sheet(adminBookingsCache);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "AllBookings");
+            XLSX.writeFile(wb, "All_Bookings_Report.xlsx");
+        }
+    </script>
+    <!-- Modal สมัครสมาชิก -->
+    <div class="modal fade" id="registerModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content bg-dark text-light border-secondary">
+                <div class="modal-header border-secondary">
+                    <h5 class="modal-title"><i class="fa-solid fa-user-plus me-2 text-info"></i>สมัครสมาชิกใหม่</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"
+                        aria-label="Close"></button>
+                </div>
+                <form id="registerForm" onsubmit="handleRegisterSubmit(event)">
+                    <div class="modal-body">
+                        <div class="mb-3">
+                            <label class="form-label text-light">ชื่อ-นามสกุล <span class="text-danger">*</span></label>
+                            <input type="text" id="regFullName" class="form-control bg-secondary text-light border-0"
+                                required placeholder="เช่น สมชาย ใจดี">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">ชื่อผู้ใช้ (Username) <span
+                                    class="text-danger">*</span></label>
+                            <input type="text" id="regUsername" class="form-control bg-secondary text-light border-0"
+                                required placeholder="ภาษาอังกฤษหรือตัวเลข">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">รหัสผ่าน (Password) <span
+                                    class="text-danger">*</span></label>
+                            <input type="password" id="regPassword"
+                                class="form-control bg-secondary text-light border-0" required placeholder="••••••••">
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label text-light">ยืนยันรหัสผ่าน <span
+                                    class="text-danger">*</span></label>
+                            <input type="password" id="regConfirmPassword"
+                                class="form-control bg-secondary text-light border-0" required placeholder="••••••••">
+                        </div>
+                    </div>
+                    <div class="modal-footer border-secondary">
+                        <button type="button" class="btn btn-outline-secondary text-light"
+                            data-bs-dismiss="modal">ยกเลิก</button>
+                        <button type="submit" class="btn btn-info text-white"><i
+                                class="fa-solid fa-check me-1"></i>ยืนยันการสมัคร</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
